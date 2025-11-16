@@ -1,0 +1,200 @@
+<Window x:Class="PrylDatabas.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:PrylDatabas"
+        xmlns:conv="clr-namespace:PrylDatabas.Converters"
+        Title="Pryldatabas" Height="700" Width="1200" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <conv:NullVisibilityConverter x:Key="NullVisibilityConverter"/>
+        <conv:NullVisibilityConverterInverse x:Key="NullVisibilityConverter_Inverse"/>
+        <conv:SortIndicatorConverter x:Key="SortIndicatorConverter"/>
+        <local:PhotoStatusConverter x:Key="PhotoStatusConverter"/>
+    </Window.Resources>
+    <DockPanel>
+        <!-- Menu Bar -->
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="Arkiv">
+                <MenuItem Header="Inställningar" Click="SettingsMenuItem_Click"/>
+                <Separator/>
+                <MenuItem Header="Avsluta" Click="ExitMenuItem_Click"/>
+            </MenuItem>
+            <MenuItem Header="Hjälp">
+                <MenuItem Header="Om" Click="AboutMenuItem_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Toolbar -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Vertical" Margin="10">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Sök:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBox x:Name="SearchBox" Width="200" Padding="5" 
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                
+                <TextBlock Text="Kategori:" VerticalAlignment="Center" Margin="20,0,10,0"/>
+                <ComboBox x:Name="CategoryCombo" Width="200" Padding="5"
+                          ItemsSource="{Binding Categories}"
+                          SelectedItem="{Binding SelectedCategory}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Main Content Area -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="300"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="400" MinWidth="300"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Items ListView -->
+            <Border Grid.Column="0" Margin="10" BorderBrush="LightGray" BorderThickness="1">
+                <ListView ItemsSource="{Binding FilteredItems}" 
+                          SelectedItem="{Binding SelectedItem}"
+                          MouseDoubleClick="ListView_MouseDoubleClick">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="60">
+                                <GridViewColumn.Header>
+                                    <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="Number" Cursor="Hand">
+                                        <TextBlock>
+                                            <Run Text="Nummer"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Number" Mode="OneWay">
+                                                        <Binding Path="SortBy"/>
+                                                        <Binding Path="SortAscending"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
+                                        </TextBlock>
+                                    </Button>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Number}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Width="200">
+                                <GridViewColumn.Header>
+                                    <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="Name" Cursor="Hand">
+                                        <TextBlock>
+                                            <Run Text="Namn"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Name" Mode="OneWay">
+                                                        <Binding Path="SortBy"/>
+                                                        <Binding Path="SortAscending"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
+                                        </TextBlock>
+                                    </Button>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Width="120">
+                                <GridViewColumn.Header>
+                                    <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="Category" Cursor="Hand">
+                                        <TextBlock>
+                                            <Run Text="Kategori"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="Category" Mode="OneWay">
+                                                        <Binding Path="SortBy"/>
+                                                        <Binding Path="SortAscending"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
+                                        </TextBlock>
+                                    </Button>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Category}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Width="150">
+                                <GridViewColumn.Header>
+                                    <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="CurrentOwner" Cursor="Hand">
+                                        <TextBlock>
+                                            <Run Text="Nuvarande Ägare"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="CurrentOwner" Mode="OneWay">
+                                                        <Binding Path="SortBy"/>
+                                                        <Binding Path="SortAscending"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
+                                        </TextBlock>
+                                    </Button>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding CurrentOwner}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch"/>
+
+            <!-- Details Panel -->
+            <ScrollViewer Grid.Column="2" Margin="10">
+                <StackPanel x:Name="DetailsPanel">
+                    <TextBlock Text="Detaljer" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+                    
+                    <Grid Visibility="{Binding SelectedItem, Converter={StaticResource NullVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Nummer:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Number}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Namn:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Name}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Kategori:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Category}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Tillverkad av:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.CreatedBy}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="År:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.CreatedYear}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Plats:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.CreatedPlace}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Stämpel:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Stamp}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Proveniens:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Provenance}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Nuvarande Ägare:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.CurrentOwner}" TextWrapping="Wrap" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Foton:" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding SelectedItem.Photos}" TextWrapping="Wrap" Margin="0,0,0,10" Foreground="{Binding SelectedItem, Converter={StaticResource PhotoStatusConverter}, Mode=OneWay}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock x:Name="NoSelectionText" Text="Välj ett föremål för att se detaljer" 
+                              Foreground="Gray" Margin="0,20,0,0" 
+                              Visibility="{Binding SelectedItem, Converter={StaticResource NullVisibilityConverter_Inverse}}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>
