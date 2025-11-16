@@ -93,6 +93,14 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public void LoadItems()
     {
         _allItems = _itemRepository.LoadItems();
+        
+        // Debug logging for photos
+        System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Loaded {_allItems.Count} items");
+        foreach (var item in _allItems.Take(10))
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindowViewModel] Item {item.Number}: {item.Name} - Photos: '{item.Photos ?? "(null)"}'");
+        }
+        
         UpdateCategories();
         ApplyFilters();
     }

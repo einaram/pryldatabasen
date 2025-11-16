@@ -34,6 +34,10 @@
                 <ComboBox x:Name="CategoryCombo" Width="200" Padding="5"
                           ItemsSource="{Binding Categories}"
                           SelectedItem="{Binding SelectedCategory}"/>
+                
+                <Button x:Name="ExportPdfButton" Content="📄 PDF" Click="ExportPdfButton_Click" 
+                       Padding="15,5" Margin="20,0,0,0" Background="#007ACC" Foreground="White" 
+                       FontSize="12" ToolTip="Exportera valda prylar till PDF"/>
             </StackPanel>
         </StackPanel>
 
@@ -47,11 +51,24 @@
 
             <!-- Items ListView -->
             <Border Grid.Column="0" Margin="10" BorderBrush="LightGray" BorderThickness="1">
-                <ListView ItemsSource="{Binding FilteredItems}" 
+                <ListView x:Name="ItemsListView"
+                          ItemsSource="{Binding FilteredItems}" 
                           SelectedItem="{Binding SelectedItem}"
-                          MouseDoubleClick="ListView_MouseDoubleClick">
+                          MouseDoubleClick="ListView_MouseDoubleClick"
+                          SelectionMode="Single">
                     <ListView.View>
                         <GridView>
+                            <GridViewColumn Width="40">
+                                <GridViewColumn.Header>
+                                    <TextBlock Text="Val"/>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox x:Name="SelectCheckBox" IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
                             <GridViewColumn Width="60">
                                 <GridViewColumn.Header>
                                     <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="Number" Cursor="Hand">

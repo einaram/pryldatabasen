@@ -1,7 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using Microsoft.Win32;
+using PrylDatabas.Services;
 using PrylDatabas.ViewModels;
 using PrylDatabas.Models;
 
@@ -53,6 +57,39 @@ public partial class MainWindow : Window
         {
             _viewModel.SortByColumn(columnName);
         }
+    }
+
+    private void ExportPdfButton_Click(object sender, RoutedEventArgs e)
+    {
+        // Get selected items based on IsSelected property
+        var selectedItems = _viewModel.FilteredItems
+            .Where(item => item.IsSelected)
+            .ToList();
+
+        if (selectedItems.Count == 0)
+        {
+            MessageBox.Show(
+                "Välj minst en pryl genom att markera checkboxen.",
+                "Ingen val",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+            return;
+        }
+
+        // Debug logging
+        System.Diagnostics.Debug.WriteLine($"[MainWindow] Exporting {selectedItems.Count} selected items:");
+        foreach (var item in selectedItems)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainWindow]   - Item {item.Number}: {item.Name} - Photos: '{item.Photos ?? "(null)"}'");
+        }
+
+        // Show export dialog
+        var exportWindow = new PdfExportWindow(selectedItems)
+        {
+            Owner = this
+        };
+
+        exportWindow.ShowDialog();
     }
 }
 

@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace PrylDatabas.Models;
 
 public class Item
@@ -12,6 +15,22 @@ public class Item
     public string? Stamp { get; set; }
     public string? Provenance { get; set; }
     public string? CurrentOwner { get; set; }
+    public bool IsSelected { get; set; }
+
+    /// <summary>
+    /// Groups creation details (by, year, place) into a single formatted string
+    /// </summary>
+    public string CreatedInfo
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrEmpty(CreatedBy)) parts.Add(CreatedBy);
+            if (!string.IsNullOrEmpty(CreatedYear)) parts.Add(CreatedYear);
+            if (!string.IsNullOrEmpty(CreatedPlace)) parts.Add(CreatedPlace);
+            return string.Join(", ", parts);
+        }
+    }
 
     public override string ToString() => Name ?? "Unknown";
 }

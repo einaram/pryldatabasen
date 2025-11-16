@@ -41,26 +41,20 @@
                     <TextBlock Text="Kategori:" FontWeight="Bold" Grid.Row="1" Grid.Column="0" Margin="0,0,10,5"/>
                     <TextBlock x:Name="CategoryBlock" Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="Tillverkad av:" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="CreatedByBlock" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <TextBlock Text="Tillverkad:" FontWeight="Bold" Grid.Row="2" Grid.Column="0" Margin="0,0,10,5"/>
+                    <TextBlock x:Name="CreatedInfoBlock" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="År:" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="YearBlock" Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <TextBlock Text="Stämpel:" FontWeight="Bold" Grid.Row="3" Grid.Column="0" Margin="0,0,10,5"/>
+                    <TextBlock x:Name="StampBlock" Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="Plats:" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="PlaceBlock" Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <TextBlock Text="Nuvarande Ägare:" FontWeight="Bold" Grid.Row="4" Grid.Column="0" Margin="0,0,10,5"/>
+                    <TextBlock x:Name="OwnerBlock" Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="Stämpel:" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="StampBlock" Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <TextBlock Text="Foton:" FontWeight="Bold" Grid.Row="5" Grid.Column="0" Margin="0,0,10,5"/>
+                    <TextBlock x:Name="PhotosBlock" Grid.Row="5" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
 
-                    <TextBlock Text="Nuvarande Ägare:" FontWeight="Bold" Grid.Row="6" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="OwnerBlock" Grid.Row="6" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
-
-                    <TextBlock Text="Foton:" FontWeight="Bold" Grid.Row="7" Grid.Column="0" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="PhotosBlock" Grid.Row="7" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
-
-                    <TextBlock Text="Proveniens:" FontWeight="Bold" Grid.Row="8" Grid.Column="0" VerticalAlignment="Top" Margin="0,0,10,5"/>
-                    <TextBlock x:Name="ProvenanceBlock" Grid.Row="8" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                    <TextBlock Text="Proveniens:" FontWeight="Bold" Grid.Row="6" Grid.Column="0" VerticalAlignment="Top" Margin="0,0,10,5"/>
+                    <TextBlock x:Name="ProvenanceBlock" Grid.Row="6" Grid.Column="1" TextWrapping="Wrap" Margin="0,0,0,5"/>
                 </Grid>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">

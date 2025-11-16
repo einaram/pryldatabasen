@@ -40,9 +40,6 @@ public partial class DetailsWindow : Window
         ItemNameBlock.Text = item.Name ?? "Okänt föremål";
         NumberBlock.Text = item.Number?.ToString() ?? "—";
         CategoryBlock.Text = item.Category ?? "—";
-        CreatedByBlock.Text = item.CreatedBy ?? "—";
-        YearBlock.Text = item.CreatedYear ?? "—";
-        PlaceBlock.Text = item.CreatedPlace ?? "—";
         StampBlock.Text = item.Stamp ?? "—";
         OwnerBlock.Text = item.CurrentOwner ?? "—";
         PhotosBlock.Text = item.Photos ?? "—";
