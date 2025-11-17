@@ -26,12 +26,18 @@ public partial class PdfExportWindow : Window
 
     private void ExportButton_Click(object sender, RoutedEventArgs e)
     {
+        // Generate filename with item numbers
+        var itemNumbers = string.Join("_", _selectedItems.Select(i => i.Number).OrderBy(n => n));
+        var fileName = _selectedItems.Count == 1 
+            ? $"prylar_{itemNumbers}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
+            : $"prylar_{itemNumbers}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+        
         // Show save file dialog
         var saveDialog = new SaveFileDialog
         {
             Filter = "PDF-filer (*.pdf)|*.pdf",
             DefaultExt = ".pdf",
-            FileName = $"prylar_export_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
+            FileName = fileName
         };
 
         if (saveDialog.ShowDialog() == true)
@@ -53,6 +59,11 @@ public partial class PdfExportWindow : Window
                             FileName = saveDialog.FileName,
                             UseShellExecute = true
                         });
+                        
+                        // Close window immediately when PDF opens
+                        DialogResult = true;
+                        Close();
+                        return;
                     }
                     catch (Exception ex)
                     {

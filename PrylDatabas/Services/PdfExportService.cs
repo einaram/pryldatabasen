@@ -16,25 +16,7 @@ public class PdfExportService
 
     public PdfExportService(string? imageFolderPath = null)
     {
-        // If no path provided, try to find it relative to the application directory
-        if (string.IsNullOrEmpty(imageFolderPath))
-        {
-            // First try relative to app directory
-            var appDir = AppDomain.CurrentDomain.BaseDirectory;
-            imageFolderPath = Path.Combine(appDir, "data", "Gamla Prylar - foton i dbs");
-            
-            Debug.WriteLine($"{LOG_PREFIX} Trying app directory path: {imageFolderPath}");
-            Debug.WriteLine($"{LOG_PREFIX} Path exists: {Directory.Exists(imageFolderPath)}");
-            
-            // If not found, try from current working directory
-            if (!Directory.Exists(imageFolderPath))
-            {
-                imageFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "data", "Gamla Prylar - foton i dbs");
-                Debug.WriteLine($"{LOG_PREFIX} Trying current working directory path: {imageFolderPath}");
-                Debug.WriteLine($"{LOG_PREFIX} Path exists: {Directory.Exists(imageFolderPath)}");
-            }
-        }
-        
+        // If no path provided, use ImageService's default (which resolves solution root correctly)
         _imageService = new ImageService(imageFolderPath);
         Debug.WriteLine($"{LOG_PREFIX} ImageService initialized with folder: {_imageService.ImageFolderPath}");
     }
@@ -81,57 +63,55 @@ public class PdfExportService
                         // Photos section
                         if (includePhotos)
                         {
-                            Debug.WriteLine($"{LOG_PREFIX} Looking for photos for item {item.Number}");
-                            Debug.WriteLine($"{LOG_PREFIX} Photos field value: '{item.Photos}'");
+                            var imageResults = _imageService.GetImageResults(item.Number?.ToString(), item.Photos);
+                            var foundImages = imageResults.Where(r => r.Found).ToList();
                             
-                            if (!string.IsNullOrEmpty(item.Photos))
+                            Debug.WriteLine($"{LOG_PREFIX} Processing {foundImages.Count} photos for item {item.Number}");
+                            
+                            if (foundImages.Count > 0)
                             {
-                                var images = _imageService.FindImages(item.Number.ToString(), item.Photos).ToList();
-                                Debug.WriteLine($"{LOG_PREFIX} Found {images.Count} images for item {item.Number}");
-                                
-                                if (images.Count > 0)
-                                {
-                                    column.Item().PaddingTop(20).Text("Foton").FontSize(14).Bold();
+                                column.Item().PaddingTop(20).Text("Foton").FontSize(14).Bold();
 
-                                    foreach (var imagePath in images)
+                                foreach (var imageResult in foundImages)
+                                {
+                                    if (!string.IsNullOrEmpty(imageResult.FullPath) && File.Exists(imageResult.FullPath))
                                     {
-                                        Debug.WriteLine($"{LOG_PREFIX} Checking image file: {imagePath}");
-                                        
-                                        if (File.Exists(imagePath))
+                                        try
                                         {
-                                            try
-                                            {
-                                                var fileInfo = new FileInfo(imagePath);
-                                                Debug.WriteLine($"{LOG_PREFIX} Image file exists, size: {fileInfo.Length} bytes");
-                                                Debug.WriteLine($"{LOG_PREFIX} Adding image to PDF: {Path.GetFileName(imagePath)}");
-                                                
-                                                column.Item().PaddingTop(10).MaxHeight(250).Image(imagePath);
-                                                
-                                                Debug.WriteLine($"{LOG_PREFIX} Image added successfully to PDF");
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                Debug.WriteLine($"{LOG_PREFIX} ERROR loading image {imagePath}: {ex.GetType().Name} - {ex.Message}");
-                                                if (ex.InnerException != null)
-                                                {
-                                                    Debug.WriteLine($"{LOG_PREFIX} Inner exception: {ex.InnerException.Message}");
-                                                }
-                                            }
+                                            var fileInfo = new FileInfo(imageResult.FullPath);
+                                            Debug.WriteLine($"{LOG_PREFIX} Adding image to PDF: {imageResult.FileName} ({fileInfo.Length} bytes)");
+                                            
+                                            column.Item().PaddingTop(10).MaxHeight(250).Image(imageResult.FullPath);
                                         }
-                                        else
+                                        catch (Exception ex)
                                         {
-                                            Debug.WriteLine($"{LOG_PREFIX} Image file NOT FOUND: {imagePath}");
+                                            Debug.WriteLine($"{LOG_PREFIX} ERROR loading image {imageResult.FileName}: {ex.GetType().Name} - {ex.Message}");
+                                            if (ex.InnerException != null)
+                                            {
+                                                Debug.WriteLine($"{LOG_PREFIX} Inner exception: {ex.InnerException.Message}");
+                                            }
                                         }
                                     }
+                                    else
+                                    {
+                                        Debug.WriteLine($"{LOG_PREFIX} Image file NOT FOUND: {imageResult.FullPath}");
+                                    }
                                 }
-                                else
+                                
+                                // Log missing expected images
+                                var missingImages = imageResults.Where(r => !r.Found).ToList();
+                                if (missingImages.Count > 0)
                                 {
-                                    Debug.WriteLine($"{LOG_PREFIX} No images found for item {item.Number}");
+                                    Debug.WriteLine($"{LOG_PREFIX} {missingImages.Count} expected photos not found for item {item.Number}:");
+                                    foreach (var missing in missingImages)
+                                    {
+                                        Debug.WriteLine($"{LOG_PREFIX}   - {missing.FileName}");
+                                    }
                                 }
                             }
                             else
                             {
-                                Debug.WriteLine($"{LOG_PREFIX} Photos field is empty for item {item.Number}");
+                                Debug.WriteLine($"{LOG_PREFIX} No photos found for item {item.Number}");
                             }
                         }
                     });

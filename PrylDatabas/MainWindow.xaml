@@ -138,6 +138,29 @@
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
 
+                            <GridViewColumn Width="60">
+                                <GridViewColumn.Header>
+                                    <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="CreatedYear" Cursor="Hand">
+                                        <TextBlock>
+                                            <Run Text="År"/>
+                                            <Run>
+                                                <Run.Text>
+                                                    <MultiBinding Converter="{StaticResource SortIndicatorConverter}" ConverterParameter="CreatedYear" Mode="OneWay">
+                                                        <Binding Path="SortBy"/>
+                                                        <Binding Path="SortAscending"/>
+                                                    </MultiBinding>
+                                                </Run.Text>
+                                            </Run>
+                                        </TextBlock>
+                                    </Button>
+                                </GridViewColumn.Header>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding CreatedYear}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
                             <GridViewColumn Width="150">
                                 <GridViewColumn.Header>
                                     <Button Background="Transparent" BorderThickness="0" Click="ColumnHeader_Click" Tag="CurrentOwner" Cursor="Hand">

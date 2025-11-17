@@ -8,24 +8,10 @@ using PrylDatabas.Models;
 
 namespace PrylDatabas;
 
-public class ImageItemDisplay
-{
-    public string FileName { get; set; }
-    public string FullPath { get; set; }
-    public bool Found { get; set; }
-
-    public ImageItemDisplay(string fileName, string fullPath, bool found)
-    {
-        FileName = fileName;
-        FullPath = fullPath;
-        Found = found;
-    }
-}
-
 public partial class DetailsWindow : Window
 {
     private List<string> _imagePaths = new();
-    private List<ImageItemDisplay> _imageDisplayItems = new();
+    private List<ImageResult> _imageDisplayItems = new();
     private ImageService _imageService;
 
     public DetailsWindow(Item item)
@@ -67,7 +53,7 @@ public partial class DetailsWindow : Window
     {
         var itemNumber = item.Number?.ToString() ?? "N/A";
         _imagePaths = _imageService.FindImages(itemNumber, item.Photos);
-        _imageDisplayItems.Clear();
+        _imageDisplayItems = _imageService.GetImageResults(itemNumber, item.Photos);
 
         // Debug: Log image search info
         var debugInfo = $"Bildsökning för föremål {itemNumber}:\n";
@@ -76,29 +62,12 @@ public partial class DetailsWindow : Window
         debugInfo += $"- Foton från DB: {item.Photos ?? "(tomt)"}\n";
         debugInfo += $"- Bilder hittade: {_imagePaths.Count}\n";
         
-        // Parse photo file names from database
-        var expectedPhotos = ParsePhotos(item.Photos);
-        var foundFileNames = new HashSet<string>(
-            _imagePaths.Select(p => Path.GetFileName(p)),
-            StringComparer.OrdinalIgnoreCase
-        );
-        
-        // Add found images first (green)
-        foreach (var imagePath in _imagePaths)
+        foreach (var result in _imageDisplayItems)
         {
-            var fileName = Path.GetFileName(imagePath);
-            _imageDisplayItems.Add(new ImageItemDisplay(fileName, imagePath, true));
-            debugInfo += $"  ✓ {fileName}\n";
-        }
-
-        // Add expected but missing images (orange)
-        foreach (var expectedPhoto in expectedPhotos)
-        {
-            if (!foundFileNames.Contains(expectedPhoto))
-            {
-                _imageDisplayItems.Add(new ImageItemDisplay(expectedPhoto, "", false));
-                debugInfo += $"  ✗ {expectedPhoto} (INTE HITTAD)\n";
-            }
+            if (result.Found)
+                debugInfo += $"  ✓ {result.FileName}\n";
+            else
+                debugInfo += $"  ✗ {result.FileName} (INTE HITTAD)\n";
         }
 
         System.Diagnostics.Debug.WriteLine(debugInfo);
@@ -132,18 +101,6 @@ public partial class DetailsWindow : Window
             NoImagesText.Visibility = Visibility.Visible;
             MainImage.Source = null;
         }
-    }
-
-    private List<string> ParsePhotos(string? photosField)
-    {
-        if (string.IsNullOrEmpty(photosField))
-            return new List<string>();
-
-        return photosField
-            .Split(',')
-            .Select(f => f.Trim())
-            .Where(f => !string.IsNullOrEmpty(f))
-            .ToList();
     }
 
     private void DisplayImage(string imagePath)

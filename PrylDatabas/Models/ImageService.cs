@@ -228,4 +228,57 @@ public class ImageService
     /// Get the configured image folder path.
     /// </summary>
     public string ImageFolderPath => _imageFolder;
+
+    /// <summary>
+    /// Get images with their found/expected status. Useful for UI display and PDF export.
+    /// Compares found files with expected photo names, matching on filename without extension.
+    /// </summary>
+    public List<ImageResult> GetImageResults(string? itemNumber, string? photoFileNames)
+    {
+        var results = new List<ImageResult>();
+        var foundImages = FindImages(itemNumber, photoFileNames);
+        var expectedPhotos = ParsePhotoFileNames(photoFileNames);
+
+        // Create a set of found file names WITHOUT extensions for comparison
+        var foundFileNamesWithoutExt = new HashSet<string>(
+            foundImages.Select(p => Path.GetFileNameWithoutExtension(p)),
+            StringComparer.OrdinalIgnoreCase
+        );
+
+        // Add found images first
+        foreach (var imagePath in foundImages)
+        {
+            var fileName = Path.GetFileName(imagePath);
+            results.Add(new ImageResult(fileName, imagePath, true));
+        }
+
+        // Add expected but missing images
+        foreach (var expectedPhoto in expectedPhotos)
+        {
+            // Compare without extensions since Photos field may not include them
+            if (!foundFileNamesWithoutExt.Contains(Path.GetFileNameWithoutExtension(expectedPhoto)))
+            {
+                results.Add(new ImageResult(expectedPhoto, "", false));
+            }
+        }
+
+        return results;
+    }
+}
+
+/// <summary>
+/// Represents an image result with its found status.
+/// </summary>
+public class ImageResult
+{
+    public string FileName { get; }
+    public string FullPath { get; }
+    public bool Found { get; }
+
+    public ImageResult(string fileName, string fullPath, bool found)
+    {
+        FileName = fileName;
+        FullPath = fullPath;
+        Found = found;
+    }
 }

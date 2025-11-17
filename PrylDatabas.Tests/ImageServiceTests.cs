@@ -194,6 +194,26 @@ public class ImageServiceTests
         }
     }
 
+    [Fact]
+    public void FindImages_WithPhotoNamesWithoutExtensions_MatchesFilesWithExtensions()
+    {
+        // This test verifies the fix for item 393 where Photos field contains "393-a,393-b"
+        // but actual files are "393-a.jpg", "393-b.jpg"
+        var service = new ImageService(_imageFolderPath);
+        
+        // Find images for item 393 with photo names without extensions
+        var images = service.FindImages("393", "393-a,393-b");
+        
+        // Should find the images despite the Photos field not including extensions
+        Assert.NotEmpty(images, "Should find images for item 393 even when photo names don't include extensions");
+        Assert.True(images.Count >= 2, $"Expected at least 2 images for item 393, but found {images.Count}");
+        
+        // Verify they're the expected files
+        var fileNames = images.Select(p => Path.GetFileName(p)).ToList();
+        Assert.Contains(fileNames, f => f.StartsWith("393-a", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(fileNames, f => f.StartsWith("393-b", StringComparison.OrdinalIgnoreCase));
+    }
+
     private string ResolveSolutionRoot()
     {
         var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
