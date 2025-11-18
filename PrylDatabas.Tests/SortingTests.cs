@@ -18,9 +18,18 @@ public class SortingTests
         if (viewModel.FilteredItems.Count == 0)
         {
             var dummyItems = TestDataProvider.GetDummyItems();
-            foreach (var item in dummyItems)
+            
+            // Use reflection to set the private _allItems field since LoadItems won't populate it
+            var allItemsField = typeof(MainWindowViewModel).GetField("_allItems", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (allItemsField != null)
             {
-                viewModel.FilteredItems.Add(item);
+                var allItemsCollection = new System.Collections.ObjectModel.ObservableCollection<PrylDatabas.Models.Item>();
+                foreach (var item in dummyItems)
+                {
+                    allItemsCollection.Add(item);
+                }
+                allItemsField.SetValue(viewModel, allItemsCollection);
             }
             
             // Rebuild categories from dummy items
@@ -34,9 +43,17 @@ public class SortingTests
                     categories.Add(item.Category);
                 }
             }
-            foreach (var cat in categories.OrderBy(c => c))
+            foreach (var cat in categories.OrderBy(c => c).Where(c => c != null))
             {
-                viewModel.Categories.Add(cat);
+                viewModel.Categories.Add(cat!);
+            }
+            
+            // Apply filters to populate FilteredItems from _allItems
+            var applyFiltersMethod = typeof(MainWindowViewModel).GetMethod("ApplyFilters",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (applyFiltersMethod != null)
+            {
+                applyFiltersMethod.Invoke(viewModel, null);
             }
         }
         
