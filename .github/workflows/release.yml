@@ -1,0 +1,83 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      
+      - name: Restore dependencies
+        run: dotnet restore
+      
+      - name: Build Release
+        run: dotnet build -c Release --no-restore
+      
+      - name: Publish self-contained executable (with .NET)
+        run: dotnet publish PrylDatabas/PrylDatabas.csproj -c Release -o publish-standalone --self-contained -p:PublishSingleFile=true
+      
+      - name: Publish framework-dependent executable (without .NET)
+        run: dotnet publish PrylDatabas/PrylDatabas.csproj -c Release -o publish-framework --self-contained=false
+      
+      - name: Create Release Artifacts
+        shell: pwsh
+        run: |
+          # Create standalone package (with .NET)
+          cd publish-standalone
+          Compress-Archive -Path PrylDatabas.exe, *.dll, runtimes, LatoFont, ..\data -DestinationPath ..\PrylDatabas-standalone.zip -Force
+          
+          # Create framework-dependent package (without .NET)
+          cd ..\publish-framework
+          Compress-Archive -Path PrylDatabas.exe, *.dll, *.deps.json, *.runtimeconfig.json, runtimes, LatoFont, ..\data -DestinationPath ..\PrylDatabas-framework-dependent.zip -Force
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            PrylDatabas-standalone.zip
+            PrylDatabas-framework-dependent.zip
+          tag_name: v${{ github.run_number }}
+          name: Release ${{ github.run_number }}
+          body: |
+            Automated release from commit ${{ github.sha }}
+            
+            ## Downloads Available
+            
+            ### PrylDatabas-standalone.zip (Recommended for most users)
+            - **Includes**: .NET 10 runtime bundled in
+            - **Size**: Larger (~100+ MB)
+            - **Requirements**: None - just extract and run
+            - **Best for**: Users who don't have .NET installed
+            
+            ### PrylDatabas-framework-dependent.zip (For .NET 10 users)
+            - **Includes**: Only the application and dependencies
+            - **Size**: Smaller (~10-20 MB)
+            - **Requirements**: .NET 10 must be installed on the system
+            - **Best for**: Users who already have .NET 10 installed
+            
+            ## Installation Instructions
+            
+            **For Standalone Version:**
+            1. Download `PrylDatabas-standalone.zip`
+            2. Extract to a folder
+            3. Run `PrylDatabas.exe`
+            
+            **For Framework-Dependent Version:**
+            1. Install [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+            2. Download `PrylDatabas-framework-dependent.zip`
+            3. Extract to a folder
+            4. Run `PrylDatabas.exe`
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
