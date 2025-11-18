@@ -5,13 +5,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   build:
+    name: Build and Release
     runs-on: windows-latest
-    permissions:
-      contents: write
-      actions: read
-    
     steps:
       - uses: actions/checkout@v4
       
@@ -56,56 +56,14 @@ jobs:
           Get-Item $frameworkPath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Including: $_" }
           Compress-Archive -Path $frameworkPath -DestinationPath PrylDatabas-framework-dependent.zip -Force
       
-      - name: Create Release
-        uses: actions/create-release@v1
-        id: create_release
-        with:
-          tag_name: v${{ github.run_number }}
-          release_name: Release ${{ github.run_number }}
-          body: |
-            Automated release from commit ${{ github.sha }}
-            
-            ## Downloads Available
-            
-            ### PrylDatabas-standalone.zip (Recommended for most users)
-            - **Includes**: .NET 10 runtime bundled in
-            - **Size**: Larger (~100+ MB)
-            - **Requirements**: None - just extract and run
-            - **Best for**: Users who don't have .NET installed
-            
-            ### PrylDatabas-framework-dependent.zip (For .NET 10 users)
-            - **Includes**: Only the application and dependencies
-            - **Size**: Smaller (~10-20 MB)
-            - **Requirements**: .NET 10 must be installed on the system
-            - **Best for**: Users who already have .NET 10 installed
-            
-            ## Installation Instructions
-            
-            **For Standalone Version:**
-            1. Download `PrylDatabas-standalone.zip`
-            2. Extract to a folder
-            3. Run `PrylDatabas.exe`
-            
-            **For Framework-Dependent Version:**
-            1. Install [.NET 10 Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
-            2. Download `PrylDatabas-framework-dependent.zip`
-            3. Extract to a folder
-            4. Run `PrylDatabas.exe`
-          draft: false
-          prerelease: false
+      - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Standalone Package
-        uses: Shopify/upload-to-release@v2.0.0
-        with:
-          name: PrylDatabas-standalone.zip
-          path: PrylDatabas-standalone.zip
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Framework-Dependent Package
-        uses: Shopify/upload-to-release@v2.0.0
-        with:
-          name: PrylDatabas-framework-dependent.zip
-          path: PrylDatabas-framework-dependent.zip
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ github.run_number }}
+        run: |
+          gh release create "$env:tag" `
+              --repo="$env:GITHUB_REPOSITORY" `
+              --title="$($env:GITHUB_REPOSITORY -split '/')[-1] $($env:tag -replace 'v')" `
+              --generate-notes `
+              PrylDatabas-standalone.zip `
+              PrylDatabas-framework-dependent.zip
