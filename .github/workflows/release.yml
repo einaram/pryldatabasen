@@ -54,13 +54,11 @@ jobs:
           Compress-Archive -Path $frameworkPath -DestinationPath PrylDatabas-framework-dependent.zip -Force
       
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: actions/create-release@v1
+        id: create_release
         with:
-          files: |
-            PrylDatabas-standalone.zip
-            PrylDatabas-framework-dependent.zip
           tag_name: v${{ github.run_number }}
-          name: Release ${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
           body: |
             Automated release from commit ${{ github.sha }}
             
@@ -94,3 +92,17 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Standalone Package
+        uses: Shopify/upload-to-release@v1
+        with:
+          name: PrylDatabas-standalone.zip
+          path: PrylDatabas-standalone.zip
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Framework-Dependent Package
+        uses: Shopify/upload-to-release@v1
+        with:
+          name: PrylDatabas-framework-dependent.zip
+          path: PrylDatabas-framework-dependent.zip
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
