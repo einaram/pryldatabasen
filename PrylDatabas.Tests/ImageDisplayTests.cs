@@ -10,9 +10,9 @@ namespace PrylDatabas.Tests;
 public class ImageDisplayTests
 {
     [Fact]
-    public void ImageItemDisplay_CanBeCreated_WithFoundImage()
+    public void ImageResult_CanBeCreated_WithFoundImage()
     {
-        var display = new ImageItemDisplay("test.jpg", "/path/to/test.jpg", true);
+        var display = new ImageResult("test.jpg", "/path/to/test.jpg", true);
         
         Assert.NotNull(display);
         Assert.Equal("test.jpg", display.FileName);
@@ -21,9 +21,9 @@ public class ImageDisplayTests
     }
 
     [Fact]
-    public void ImageItemDisplay_CanBeCreated_WithMissingImage()
+    public void ImageResult_CanBeCreated_WithMissingImage()
     {
-        var display = new ImageItemDisplay("missing.jpg", "", false);
+        var display = new ImageResult("missing.jpg", "", false);
         
         Assert.NotNull(display);
         Assert.Equal("missing.jpg", display.FileName);
@@ -82,10 +82,10 @@ public class ImageDisplayTests
     }
 
     [Fact]
-    public void ImageItemDisplay_MultipleInstances_AreIndependent()
+    public void ImageResult_MultipleInstances_AreIndependent()
     {
-        var display1 = new ImageItemDisplay("image1.jpg", "/path/1", true);
-        var display2 = new ImageItemDisplay("image2.jpg", "/path/2", false);
+        var display1 = new ImageResult("image1.jpg", "/path/1", true);
+        var display2 = new ImageResult("image2.jpg", "/path/2", false);
         
         Assert.NotEqual(display1.FileName, display2.FileName);
         Assert.NotEqual(display1.FullPath, display2.FullPath);
@@ -93,9 +93,9 @@ public class ImageDisplayTests
     }
 
     [Fact]
-    public void ImageItemDisplay_WithEmptyFileName_StillWorks()
+    public void ImageResult_WithEmptyFileName_StillWorks()
     {
-        var display = new ImageItemDisplay("", "/path/test.jpg", true);
+        var display = new ImageResult("", "/path/test.jpg", true);
         
         Assert.Empty(display.FileName);
         Assert.Equal("/path/test.jpg", display.FullPath);
@@ -103,9 +103,9 @@ public class ImageDisplayTests
     }
 
     [Fact]
-    public void ImageItemDisplay_WithSpecialCharactersInFileName_StillWorks()
+    public void ImageResult_WithSpecialCharactersInFileName_StillWorks()
     {
-        var display = new ImageItemDisplay("302-a (kopia).jpg", "/path/302-a (kopia).jpg", true);
+        var display = new ImageResult("302-a (kopia).jpg", "/path/302-a (kopia).jpg", true);
         
         Assert.Equal("302-a (kopia).jpg", display.FileName);
         Assert.Equal("/path/302-a (kopia).jpg", display.FullPath);
@@ -123,7 +123,7 @@ public class ImageDisplayTests
         var foundImages = new List<string> { "/path/to/photo.jpg" };
         var expectedPhotos = new List<string> { "photo.jpg" };
         
-        var displayItems = new List<ImageItemDisplay>();
+        var displayItems = new List<ImageResult>();
         var foundFileNames = new HashSet<string>(
             foundImages.Select(p => System.IO.Path.GetFileName(p)),
             StringComparer.OrdinalIgnoreCase
@@ -133,7 +133,7 @@ public class ImageDisplayTests
         foreach (var imagePath in foundImages)
         {
             var fileName = System.IO.Path.GetFileName(imagePath);
-            displayItems.Add(new ImageItemDisplay(fileName, imagePath, true));
+            displayItems.Add(new ImageResult(fileName, imagePath, true));
         }
 
         // Add expected but missing images (orange)
@@ -141,7 +141,7 @@ public class ImageDisplayTests
         {
             if (!foundFileNames.Contains(expectedPhoto))
             {
-                displayItems.Add(new ImageItemDisplay(expectedPhoto, "", false));
+                displayItems.Add(new ImageResult(expectedPhoto, "", false));
             }
         }
         

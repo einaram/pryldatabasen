@@ -23,6 +23,9 @@ jobs:
       - name: Build Release
         run: dotnet build -c Release --no-restore
       
+      - name: Run Tests
+        run: dotnet test -c Release --no-build --verbosity normal
+      
       - name: Publish self-contained executable (with .NET)
         run: dotnet publish PrylDatabas/PrylDatabas.csproj -c Release -o publish-standalone --self-contained -p:PublishSingleFile=true
       

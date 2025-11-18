@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Xunit;
 using PrylDatabas.Models;
 
@@ -205,13 +206,13 @@ public class ImageServiceTests
         var images = service.FindImages("393", "393-a,393-b");
         
         // Should find the images despite the Photos field not including extensions
-        Assert.NotEmpty(images, "Should find images for item 393 even when photo names don't include extensions");
+        Assert.NotEmpty(images);
         Assert.True(images.Count >= 2, $"Expected at least 2 images for item 393, but found {images.Count}");
         
         // Verify they're the expected files
         var fileNames = images.Select(p => Path.GetFileName(p)).ToList();
-        Assert.Contains(fileNames, f => f.StartsWith("393-a", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(fileNames, f => f.StartsWith("393-b", StringComparison.OrdinalIgnoreCase));
+        Assert.True(fileNames.Any(f => f.StartsWith("393-a", StringComparison.OrdinalIgnoreCase)));
+        Assert.True(fileNames.Any(f => f.StartsWith("393-b", StringComparison.OrdinalIgnoreCase)));
     }
 
     private string ResolveSolutionRoot()
