@@ -36,12 +36,22 @@ jobs:
         shell: pwsh
         run: |
           # Create standalone package (with .NET)
-          cd publish-standalone
-          Compress-Archive -Path PrylDatabas.exe, *.dll, runtimes, LatoFont, ..\data -DestinationPath ..\PrylDatabas-standalone.zip -Force
+          $standalonePath = @("publish-standalone/PrylDatabas.exe", "publish-standalone/*.dll")
+          if (Test-Path "publish-standalone/runtimes") { $standalonePath += "publish-standalone/runtimes" }
+          if (Test-Path "publish-standalone/LatoFont") { $standalonePath += "publish-standalone/LatoFont" }
+          if (Test-Path "data") { $standalonePath += "data" }
+          
+          Get-Item $standalonePath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Including: $_" }
+          Compress-Archive -Path $standalonePath -DestinationPath PrylDatabas-standalone.zip -Force
           
           # Create framework-dependent package (without .NET)
-          cd ..\publish-framework
-          Compress-Archive -Path PrylDatabas.exe, *.dll, *.deps.json, *.runtimeconfig.json, runtimes, LatoFont, ..\data -DestinationPath ..\PrylDatabas-framework-dependent.zip -Force
+          $frameworkPath = @("publish-framework/PrylDatabas.exe", "publish-framework/*.dll", "publish-framework/*.deps.json", "publish-framework/*.runtimeconfig.json")
+          if (Test-Path "publish-framework/runtimes") { $frameworkPath += "publish-framework/runtimes" }
+          if (Test-Path "publish-framework/LatoFont") { $frameworkPath += "publish-framework/LatoFont" }
+          if (Test-Path "data") { $frameworkPath += "data" }
+          
+          Get-Item $frameworkPath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Including: $_" }
+          Compress-Archive -Path $frameworkPath -DestinationPath PrylDatabas-framework-dependent.zip -Force
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
