@@ -46,7 +46,7 @@ public partial class MainWindow : Window
     {
         if (_viewModel.SelectedItem != null)
         {
-            var detailWindow = new DetailsWindow(_viewModel.SelectedItem, _viewModel.ImageFolderPath);
+            var detailWindow = new DetailsWindow(_viewModel.SelectedItem, _viewModel.ImageFolderPath, _viewModel.ExcelFilePath);
             detailWindow.ShowDialog();
         }
     }
@@ -90,6 +90,41 @@ public partial class MainWindow : Window
         };
 
         exportWindow.ShowDialog();
+    }
+
+    private void AddImagesButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_viewModel.SelectedItem == null)
+        {
+            MessageBox.Show("Välj ett föremål först.", "Ingen val", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var imageManagementService = new ImageManagementService(_viewModel.ImageFolderPath, _viewModel.ItemRepository);
+        var selectedImages = imageManagementService.SelectMultipleImages();
+
+        if (selectedImages != null && selectedImages.Count > 0)
+        {
+            if (imageManagementService.AddImagesToItem(_viewModel.SelectedItem, selectedImages))
+            {
+                MessageBox.Show(
+                    $"Lade till {selectedImages.Count} bild(er) för '{_viewModel.SelectedItem.Name}'.",
+                    "Bilder tillagd",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                
+                // Refresh to show updated photos
+                _viewModel.RefreshItems();
+            }
+            else
+            {
+                MessageBox.Show(
+                    "Det gick inte att lägga till bilderna.",
+                    "Fel",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
     }
 }
 

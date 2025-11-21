@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
+using ClosedXML.Excel;
 
 namespace PrylDatabas.Models;
 
@@ -34,61 +33,35 @@ public class ItemRepository
         {
             // Open with FileShare.ReadWrite to allow other processes (like Excel) to have the file open
             using (var fileStream = new FileStream(resolvedPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-            using (var spreadsheetDocument = SpreadsheetDocument.Open(fileStream, false))
+            using (var workbook = new XLWorkbook(fileStream))
             {
-                var workbookPart = spreadsheetDocument.WorkbookPart;
-                if (workbookPart == null)
+                var worksheet = workbook.Worksheets.FirstOrDefault();
+                if (worksheet == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("No workbook part found");
+                    System.Diagnostics.Debug.WriteLine("No worksheet found");
                     return items;
                 }
 
-                // Find the first worksheet with data (skip empty sheets)
-                WorksheetPart? worksheetPart = null;
-                foreach (var wsPart in workbookPart.WorksheetParts)
+                var rows = worksheet.RangeUsed()?.Rows().ToList();
+                if (rows == null || rows.Count < 2)
                 {
-                    var sheetData = wsPart.Worksheet.Elements<SheetData>().FirstOrDefault();
-                    var rows = sheetData?.Elements<Row>().ToList() ?? new List<Row>();
-                    if (rows.Count > 1) // Has header + at least one data row
-                    {
-                        worksheetPart = wsPart;
-                        break;
-                    }
-                }
-
-                if (worksheetPart == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("No worksheet with data found");
+                    System.Diagnostics.Debug.WriteLine($"No data rows found (only {rows?.Count ?? 0} rows)");
                     return items;
                 }
 
-                var sheetDataContent = worksheetPart.Worksheet.Elements<SheetData>().FirstOrDefault();
-                if (sheetDataContent == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("No sheet data found");
-                    return items;
-                }
-
-                var rows2 = sheetDataContent.Elements<Row>().ToList();
-                if (rows2.Count < 2)
-                {
-                    System.Diagnostics.Debug.WriteLine($"No data rows found (only {rows2.Count} rows)");
-                    return items;
-                }
-
-                System.Diagnostics.Debug.WriteLine($"Found {rows2.Count} rows in Excel file");
+                System.Diagnostics.Debug.WriteLine($"Found {rows.Count} rows in Excel file");
 
                 // Get column mapping from header row
-                var headerRow = rows2[0];
-                var columnMap = GetColumnMap(headerRow, workbookPart);
+                var headerRow = rows[0];
+                var columnMap = GetColumnMap(headerRow);
 
                 System.Diagnostics.Debug.WriteLine($"Column map: {string.Join(", ", columnMap.Keys)}");
 
                 // Process data rows
-                for (int i = 1; i < rows2.Count; i++)
+                for (int i = 1; i < rows.Count; i++)
                 {
-                    var row = rows2[i];
-                    var item = ParseRow(row, columnMap, workbookPart);
+                    var row = rows[i];
+                    var item = ParseRow(row, columnMap);
                     if (item != null && !string.IsNullOrEmpty(item.Name))
                     {
                         items.Add(item);
@@ -105,6 +78,73 @@ public class ItemRepository
         }
 
         return items;
+    }
+
+    /// <summary>
+    /// Update the Photos cell for an item and save the workbook.
+    /// </summary>
+    public void UpdateItemPhotos(int itemNumber, string photoFileNames)
+    {
+        var resolvedPath = ResolvePath(_filePath);
+        
+        if (!File.Exists(resolvedPath))
+        {
+            System.Diagnostics.Debug.WriteLine($"Excel file not found: {resolvedPath}");
+            return;
+        }
+
+        try
+        {
+            using (var workbook = new XLWorkbook(resolvedPath))
+            {
+                var worksheet = workbook.Worksheets.FirstOrDefault();
+                if (worksheet == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("No worksheet found");
+                    return;
+                }
+
+                var rows = worksheet.RangeUsed()?.Rows().ToList();
+                if (rows == null || rows.Count < 2)
+                {
+                    System.Diagnostics.Debug.WriteLine("No data rows found");
+                    return;
+                }
+
+                // Get column mapping from header row
+                var headerRow = rows[0];
+                var columnMap = GetColumnMap(headerRow);
+
+                if (!columnMap.TryGetValue("foto", out var photoColumnIndex))
+                {
+                    System.Diagnostics.Debug.WriteLine("Photo column not found");
+                    return;
+                }
+
+                // Find the row with matching item number
+                for (int i = 1; i < rows.Count; i++)
+                {
+                    var row = rows[i];
+                    if (TryGetCellValue(row, columnMap, "nummer", out var numberStr) &&
+                        int.TryParse(numberStr, out var number) && number == itemNumber)
+                    {
+                        // Update the photo cell
+                        var photoCell = row.Cell(photoColumnIndex + 1); // ClosedXML uses 1-based indexing
+                        photoCell.SetValue(photoFileNames);
+                        System.Diagnostics.Debug.WriteLine($"Updated photos for item {itemNumber} to: {photoFileNames}");
+                        break;
+                    }
+                }
+
+                workbook.Save();
+                System.Diagnostics.Debug.WriteLine("Workbook saved successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error updating photos: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+        }
     }
 
     private string ResolvePath(string filePath)
@@ -131,86 +171,72 @@ public class ItemRepository
         return filePath;
     }
 
-    private Dictionary<string, int> GetColumnMap(Row headerRow, WorkbookPart workbookPart)
+    private Dictionary<string, int> GetColumnMap(IXLRangeRow headerRow)
     {
         var columnMap = new Dictionary<string, int>();
-        var sharedStringsPart = workbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
 
-        var headerCells = headerRow.Elements<Cell>().ToList();
-        for (int i = 0; i < headerCells.Count; i++)
+        var lastCell = headerRow.LastCellUsed();
+        var columnCount = lastCell?.Address.ColumnNumber ?? 0;
+        
+        for (int i = 1; i <= columnCount; i++)
         {
-            var cell = headerCells[i];
-            var headerValue = GetCellValue(cell, sharedStringsPart)?.Trim().ToLower();
+            var headerValue = headerRow.Cell(i).GetString().Trim().ToLower();
 
             if (!string.IsNullOrEmpty(headerValue))
             {
-                columnMap[headerValue] = i;
+                columnMap[headerValue] = i - 1; // Store as 0-based index
             }
         }
 
         return columnMap;
     }
 
-    private Item? ParseRow(Row row, Dictionary<string, int> columnMap, WorkbookPart workbookPart)
+    private Item? ParseRow(IXLRangeRow row, Dictionary<string, int> columnMap)
     {
-        var sharedStringsPart = workbookPart.GetPartsOfType<SharedStringTablePart>().FirstOrDefault();
-        var cells = row.Elements<Cell>().ToList();
-        var rowReference = row.RowIndex?.ToString() ?? "0";
-
         var item = new Item();
 
-        if (TryGetCellValue(cells, columnMap, "nummer", sharedStringsPart, rowReference, out var numberStr))
+        if (TryGetCellValue(row, columnMap, "nummer", out var numberStr))
             if (int.TryParse(numberStr, out var num)) item.Number = num;
 
-        if (TryGetCellValue(cells, columnMap, "namn", sharedStringsPart, rowReference, out var name))
+        if (TryGetCellValue(row, columnMap, "namn", out var name))
             item.Name = name;
 
-        if (TryGetCellValue(cells, columnMap, "foto", sharedStringsPart, rowReference, out var photos))
+        if (TryGetCellValue(row, columnMap, "foto", out var photos))
             item.Photos = photos;
 
-        if (TryGetCellValue(cells, columnMap, "kategori", sharedStringsPart, rowReference, out var category))
+        if (TryGetCellValue(row, columnMap, "kategori", out var category))
             item.Category = category;
 
-        if (TryGetCellValue(cells, columnMap, "tillverkad_vem", sharedStringsPart, rowReference, out var createdBy))
+        if (TryGetCellValue(row, columnMap, "tillverkad_vem", out var createdBy))
             item.CreatedBy = createdBy;
 
-        if (TryGetCellValue(cells, columnMap, "tillverkad_år", sharedStringsPart, rowReference, out var createdYear))
+        if (TryGetCellValue(row, columnMap, "tillverkad_år", out var createdYear))
             item.CreatedYear = createdYear;
 
-        if (TryGetCellValue(cells, columnMap, "tillverkad_plats", sharedStringsPart, rowReference, out var createdPlace))
+        if (TryGetCellValue(row, columnMap, "tillverkad_plats", out var createdPlace))
             item.CreatedPlace = createdPlace;
 
-        if (TryGetCellValue(cells, columnMap, "stämpel", sharedStringsPart, rowReference, out var stamp))
+        if (TryGetCellValue(row, columnMap, "stämpel", out var stamp))
             item.Stamp = stamp;
 
-        if (TryGetCellValue(cells, columnMap, "proveniens", sharedStringsPart, rowReference, out var provenance))
+        if (TryGetCellValue(row, columnMap, "proveniens", out var provenance))
             item.Provenance = provenance;
 
-        // Try both variations of the column name (with and without space after underscore)
-        if (TryGetCellValue(cells, columnMap, "nuvarand_ägare", sharedStringsPart, rowReference, out var currentOwner) ||
-            TryGetCellValue(cells, columnMap, "nuvarand_ ägare", sharedStringsPart, rowReference, out currentOwner))
+        // Try both variations of the column name (with and without space)
+        if (TryGetCellValue(row, columnMap, "nuvarand_ägare", out var currentOwner) ||
+            TryGetCellValue(row, columnMap, "nuvarand_ ägare", out currentOwner))
             item.CurrentOwner = currentOwner;
 
         return item;
     }
 
-    private bool TryGetCellValue(List<Cell> cells, Dictionary<string, int> columnMap, string columnName,
-        SharedStringTablePart? sharedStringsPart, string rowReference, out string? value)
+    private bool TryGetCellValue(IXLRangeRow row, Dictionary<string, int> columnMap, string columnName, out string? value)
     {
         value = null;
         if (!columnMap.TryGetValue(columnName, out var columnIndex))
             return false;
 
-        // Convert column index to Excel column letter
-        var columnLetter = ConvertIndexToColumnLetter(columnIndex);
-        var cellReference = columnLetter + rowReference;
-
-        // Find the cell with the matching cell reference
-        var cell = cells.FirstOrDefault(c => c.CellReference?.Value == cellReference);
-        if (cell == null)
-            return false;
-
-        var cellValue = GetCellValue(cell, sharedStringsPart);
+        var cellValue = row.Cell(columnIndex + 1).GetString(); // ClosedXML uses 1-based indexing
         if (!string.IsNullOrEmpty(cellValue))
         {
             value = cellValue.Trim();
@@ -218,39 +244,5 @@ public class ItemRepository
         }
 
         return false;
-    }
-
-    private string ConvertIndexToColumnLetter(int columnIndex)
-    {
-        // Convert 0-based column index to Excel column letter (A, B, C, ..., Z, AA, AB, ...)
-        string columnLetter = "";
-        int index = columnIndex + 1; // Excel columns are 1-based
-
-        while (index > 0)
-        {
-            int remainder = (index - 1) % 26;
-            columnLetter = (char)('A' + remainder) + columnLetter;
-            index = (index - remainder - 1) / 26;
-        }
-
-        return columnLetter;
-    }
-
-    private string? GetCellValue(Cell? cell, SharedStringTablePart? sharedStringsPart)
-    {
-        if (cell == null)
-            return null;
-
-        var cellValue = cell.CellValue;
-        if (cellValue == null)
-            return null;
-
-        if (cell.DataType?.Value == CellValues.SharedString)
-        {
-            if (int.TryParse(cellValue.Text, out var sharedStringIndex))
-                return sharedStringsPart?.SharedStringTable.ElementAt(sharedStringIndex).InnerText;
-        }
-
-        return cellValue.Text;
     }
 }

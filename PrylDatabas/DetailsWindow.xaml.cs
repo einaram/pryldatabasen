@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using PrylDatabas.Models;
+using PrylDatabas.Services;
 
 namespace PrylDatabas;
 
@@ -13,20 +14,59 @@ public partial class DetailsWindow : Window
     private List<string> _imagePaths = new();
     private List<ImageResult> _imageDisplayItems = new();
     private ImageService _imageService;
+    private Item _currentItem;
+    private string _imageFolderPath;
+    private string _excelFilePath;
 
     public DetailsWindow(Item item)
     {
         InitializeComponent();
-        _imageService = new ImageService();
+        _currentItem = item;
+        var imageService = new ImageService();
+        _imageFolderPath = imageService.ImageFolderPath;
+        _excelFilePath = GetExcelFilePath();
+        _imageService = imageService;
         PopulateDetails(item);
     }
 
-    public DetailsWindow(Item item, string imageFolderPath)
+    public DetailsWindow(Item item, string imageFolderPath, string excelFilePath = "")
     {
         InitializeComponent();
-        System.Diagnostics.Debug.WriteLine($"[DetailsWindow] Created with imageFolderPath: {imageFolderPath}");
+        _currentItem = item;
+        _imageFolderPath = imageFolderPath;
+        _excelFilePath = excelFilePath ?? GetExcelFilePath();
+        System.Diagnostics.Debug.WriteLine($"[DetailsWindow] Created with imageFolderPath: {imageFolderPath}, excelFilePath: {_excelFilePath}");
         _imageService = new ImageService(imageFolderPath);
         PopulateDetails(item);
+    }
+
+    private string GetExcelFilePath()
+    {
+        var settingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "PrylDatabas",
+            "settings.txt");
+
+        if (File.Exists(settingsPath))
+        {
+            try
+            {
+                var lines = File.ReadAllLines(settingsPath);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("ExcelFile=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var path = line.Substring("ExcelFile=".Length).Trim();
+                        if (File.Exists(path))
+                            return path;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // Fallback to default
+        return "data/Gamla Prylar - dbs/Gamla Prylar.xlsx";
     }
 
     private void PopulateDetails(Item item)
@@ -141,6 +181,54 @@ public partial class DetailsWindow : Window
             {
                 MainImage.Source = null;
             }
+        }
+    }
+
+    private void AddImagesButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentItem == null)
+        {
+            MessageBox.Show("Inget föremål är valt.", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            var itemRepository = new ItemRepository(_excelFilePath);
+            var imageManagementService = new ImageManagementService(_imageFolderPath, itemRepository);
+            var selectedImages = imageManagementService.SelectMultipleImages();
+
+            if (selectedImages != null && selectedImages.Count > 0)
+            {
+                if (imageManagementService.AddImagesToItem(_currentItem, selectedImages))
+                {
+                    MessageBox.Show(
+                        $"Lade till {selectedImages.Count} bild(er) för '{_currentItem.Name}'.",
+                        "Bilder tillagda",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    
+                    // Reload images to display newly added ones
+                    LoadImages(_currentItem);
+                }
+                else
+                {
+                    MessageBox.Show(
+                        "Det gick inte att lägga till bilderna.",
+                        "Fel",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DetailsWindow] Error in AddImagesButton_Click: {ex.Message}");
+            MessageBox.Show(
+                $"Ett fel uppstod: {ex.Message}",
+                "Fel",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
         }
     }
 

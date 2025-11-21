@@ -114,4 +114,65 @@ public class ExcelFileReaderTests
         // Assert
         Assert.NotEmpty(categoriesWithContent);
     }
+
+    [Fact]
+    public void UpdateItemPhotos_WithValidItemNumber_DoesNotThrow()
+    {
+        // Arrange
+        var repository = new ItemRepository(_excelFilePath);
+        var items = repository.LoadItems();
+        
+        if (items.Count == 0)
+            Assert.Fail("No items loaded from Excel file for testing");
+
+        var itemToUpdate = items[0];
+        var newPhotos = "test_photo_1.jpg, test_photo_2.jpg";
+
+        // Act & Assert
+        // The method should complete without throwing an exception
+        // We don't verify persistence due to file locking in test environment
+        if (itemToUpdate.Number.HasValue)
+        {
+            Assert.Null(Record.Exception(() => 
+                repository.UpdateItemPhotos(itemToUpdate.Number.Value, newPhotos)));
+        }
+    }
+
+    [Fact]
+    public void UpdateItemPhotos_WithNonexistentItemNumber_DoesNotThrow()
+    {
+        // Arrange
+        var repository = new ItemRepository(_excelFilePath);
+        var nonexistentItemNumber = 999999;
+
+        // Act & Assert
+        // Should not throw an exception
+        Assert.Null(Record.Exception(() => 
+            repository.UpdateItemPhotos(nonexistentItemNumber, "some_photo.jpg")));
+    }
+
+    [Fact]
+    public void UpdateItemPhotos_WithEmptyPhotoString_DoesNotThrow()
+    {
+        // Arrange
+        var repository = new ItemRepository(_excelFilePath);
+        var items = repository.LoadItems();
+        
+        if (items.Count == 0)
+            Assert.Fail("No items loaded from Excel file for testing");
+
+        var itemToUpdate = items.FirstOrDefault(i => !string.IsNullOrEmpty(i.Photos));
+        
+        if (itemToUpdate == null)
+            Assert.Fail("No items with photos found for testing");
+
+        // Act & Assert
+        // The method should complete without throwing an exception
+        // We don't verify persistence due to file locking in test environment
+        if (itemToUpdate.Number.HasValue)
+        {
+            Assert.Null(Record.Exception(() => 
+                repository.UpdateItemPhotos(itemToUpdate.Number.Value, string.Empty)));
+        }
+    }
 }

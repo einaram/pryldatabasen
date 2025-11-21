@@ -264,6 +264,15 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     public string ImageFolderPath => _imageFolderPath;
 
+    public string ExcelFilePath => _excelFilePath;
+
+    public ItemRepository ItemRepository => _itemRepository;
+
+    public void RefreshItems()
+    {
+        LoadItems();
+    }
+
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

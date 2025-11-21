@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DocumentFormat.OpenXml" Version="2.20.0" />
+    <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="QuestPDF" Version="2025.7.4" />
     <PackageReference Include="System.Windows.Forms" Version="4.0.0" />
   </ItemGroup>
