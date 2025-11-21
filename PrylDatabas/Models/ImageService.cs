@@ -15,10 +15,12 @@ public class ImageService
         if (string.IsNullOrEmpty(imageFolder))
         {
             _imageFolder = GetDefaultImageFolder();
+            System.Diagnostics.Debug.WriteLine($"[ImageService] Using default folder: {_imageFolder}");
         }
         else
         {
             _imageFolder = imageFolder;
+            System.Diagnostics.Debug.WriteLine($"[ImageService] Using configured folder: {_imageFolder}");
         }
     }
 

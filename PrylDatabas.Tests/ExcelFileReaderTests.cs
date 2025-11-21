@@ -23,7 +23,7 @@ public class ExcelFileReaderTests
         }
 
         // Path to the actual Excel file in the data directory
-        _excelFilePath = Path.Combine(_solutionRoot, "data", "Gamla Prylar - dbs", "Gamla prylar 251115-xlsx.xlsx");
+        _excelFilePath = Path.Combine(_solutionRoot, "data", "Gamla Prylar - dbs", "Gamla prylar 251115.xlsx");
     }
 
     [Fact]

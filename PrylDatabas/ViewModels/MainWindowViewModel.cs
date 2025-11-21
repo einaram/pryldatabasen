@@ -18,6 +18,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private string _searchText = string.Empty;
     private string? _selectedCategory;
     private string _excelFilePath;
+    private string _imageFolderPath;
     private string _sortBy = string.Empty; // Start empty so first sort sets it
     private bool _sortAscending = true;
 
@@ -80,6 +81,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public MainWindowViewModel()
     {
         _excelFilePath = GetExcelFilePath();
+        _imageFolderPath = GetImageFolderPath();
         _allItems = new ObservableCollection<Item>();
         _filteredItems = new ObservableCollection<Item>();
         Categories = new ObservableCollection<string>();
@@ -110,6 +112,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
         _excelFilePath = filePath;
         _itemRepository = new ItemRepository(filePath);
         LoadItems();
+    }
+
+    public void SetImageFolderPath(string folderPath)
+    {
+        _imageFolderPath = folderPath;
     }
 
     private void UpdateCategories()
@@ -212,6 +219,50 @@ public class MainWindowViewModel : INotifyPropertyChanged
         // Default path relative to solution root
         return Path.Combine("data", "Gamla Prylar - dbs", "Gamla prylar 251115-xlsx.xlsx");
     }
+
+    private string GetImageFolderPath()
+    {
+        var settingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "PrylDatabas",
+            "settings.txt");
+
+        if (File.Exists(settingsPath))
+        {
+            try
+            {
+                var lines = File.ReadAllLines(settingsPath);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("ImageFolderPath=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var path = line.Substring("ImageFolderPath=".Length).Trim();
+                        if (!string.IsNullOrEmpty(path))
+                            return path;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        // Default path - resolve to absolute path
+        var solutionRoot = ResolveSolutionRoot();
+        return Path.Combine(solutionRoot, "data", "Gamla Prylar - foton i dbs");
+    }
+
+    private string ResolveSolutionRoot()
+    {
+        var currentDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+        var searchDir = currentDir;
+
+        while (searchDir.Parent != null && !File.Exists(Path.Combine(searchDir.FullName, "PrylDatabasSolution.sln")))
+        {
+            searchDir = searchDir.Parent;
+        }
+        return searchDir.FullName;
+    }
+
+    public string ImageFolderPath => _imageFolderPath;
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {

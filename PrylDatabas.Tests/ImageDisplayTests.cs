@@ -35,7 +35,7 @@ public class ImageDisplayTests
     public void ImageStatusConverter_ReturnsGreen_ForFoundImage()
     {
         var converter = new ImageStatusConverter();
-        var result = converter.Convert(true, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = converter.Convert(true, typeof(System.Windows.Media.Brush), null!, System.Globalization.CultureInfo.InvariantCulture);
         
         Assert.NotNull(result);
         Assert.Equal(System.Windows.Media.Brushes.Green, result);
@@ -45,7 +45,7 @@ public class ImageDisplayTests
     public void ImageStatusConverter_ReturnsOrange_ForMissingImage()
     {
         var converter = new ImageStatusConverter();
-        var result = converter.Convert(false, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = converter.Convert(false, typeof(System.Windows.Media.Brush), null!, System.Globalization.CultureInfo.InvariantCulture);
         
         Assert.NotNull(result);
         Assert.Equal(System.Windows.Media.Brushes.Orange, result);
@@ -55,7 +55,7 @@ public class ImageDisplayTests
     public void ImageStatusConverter_ReturnsBlack_ForNullValue()
     {
         var converter = new ImageStatusConverter();
-        var result = converter.Convert(null, typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = converter.Convert(null, typeof(System.Windows.Media.Brush), null!, System.Globalization.CultureInfo.InvariantCulture);
         
         Assert.NotNull(result);
         Assert.Equal(System.Windows.Media.Brushes.Black, result);
@@ -65,7 +65,7 @@ public class ImageDisplayTests
     public void ImageStatusConverter_ReturnsBlack_ForNonBoolValue()
     {
         var converter = new ImageStatusConverter();
-        var result = converter.Convert("string", typeof(System.Windows.Media.Brush), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = converter.Convert("string", typeof(System.Windows.Media.Brush), null!, System.Globalization.CultureInfo.InvariantCulture);
         
         Assert.NotNull(result);
         Assert.Equal(System.Windows.Media.Brushes.Black, result);
@@ -77,7 +77,7 @@ public class ImageDisplayTests
         var converter = new ImageStatusConverter();
         
         Assert.Throws<NotImplementedException>(() => 
-            converter.ConvertBack(System.Windows.Media.Brushes.Green, typeof(bool), null, System.Globalization.CultureInfo.InvariantCulture)
+            converter.ConvertBack(System.Windows.Media.Brushes.Green, typeof(bool), null!, System.Globalization.CultureInfo.InvariantCulture)
         );
     }
 

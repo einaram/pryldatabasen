@@ -46,7 +46,7 @@ public partial class MainWindow : Window
     {
         if (_viewModel.SelectedItem != null)
         {
-            var detailWindow = new DetailsWindow(_viewModel.SelectedItem);
+            var detailWindow = new DetailsWindow(_viewModel.SelectedItem, _viewModel.ImageFolderPath);
             detailWindow.ShowDialog();
         }
     }
@@ -84,7 +84,7 @@ public partial class MainWindow : Window
         }
 
         // Show export dialog
-        var exportWindow = new PdfExportWindow(selectedItems)
+        var exportWindow = new PdfExportWindow(selectedItems, _viewModel.ImageFolderPath)
         {
             Owner = this
         };

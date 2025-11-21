@@ -24,6 +24,16 @@ public partial class PdfExportWindow : Window
         ItemsListBox.ItemsSource = _selectedItems.Select(i => $"Nr {i.Number} - {i.Name}").ToList();
     }
 
+    public PdfExportWindow(List<Item> selectedItems, string imageFolderPath)
+    {
+        InitializeComponent();
+        _selectedItems = selectedItems;
+        _pdfExportService = new PdfExportService(imageFolderPath);
+        
+        // Bind selected items to ListBox
+        ItemsListBox.ItemsSource = _selectedItems.Select(i => $"Nr {i.Number} - {i.Name}").ToList();
+    }
+
     private void ExportButton_Click(object sender, RoutedEventArgs e)
     {
         // Generate filename with item numbers

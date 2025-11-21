@@ -35,11 +35,16 @@ public partial class SettingsWindow : Window
                     {
                         FilePathBox.Text = line.Substring("ExcelFile=".Length).Trim();
                     }
+                    else if (line.StartsWith("ImageFolderPath=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ImageFolderPathBox.Text = line.Substring("ImageFolderPath=".Length).Trim();
+                    }
                 }
             }
             catch
             {
                 FilePathBox.Text = string.Empty;
+                ImageFolderPathBox.Text = string.Empty;
             }
         }
     }
@@ -58,10 +63,24 @@ public partial class SettingsWindow : Window
         }
     }
 
+    private void BrowseImageButton_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Välj bildmapp"
+        };
+
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        {
+            ImageFolderPathBox.Text = dialog.SelectedPath;
+        }
+    }
+
     private void OkButton_Click(object sender, RoutedEventArgs e)
     {
         SaveSettings();
         _viewModel.SetExcelFilePath(FilePathBox.Text);
+        _viewModel.SetImageFolderPath(ImageFolderPathBox.Text);
         DialogResult = true;
         Close();
     }
@@ -83,7 +102,11 @@ public partial class SettingsWindow : Window
             Directory.CreateDirectory(appDataPath);
 
             var settingsPath = Path.Combine(appDataPath, "settings.txt");
-            var settings = new[] { $"ExcelFile={FilePathBox.Text}" };
+            var settings = new[]
+            {
+                $"ExcelFile={FilePathBox.Text}",
+                $"ImageFolderPath={ImageFolderPathBox.Text}"
+            };
             File.WriteAllLines(settingsPath, settings);
         }
         catch (Exception ex)

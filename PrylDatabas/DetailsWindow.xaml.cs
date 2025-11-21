@@ -21,6 +21,14 @@ public partial class DetailsWindow : Window
         PopulateDetails(item);
     }
 
+    public DetailsWindow(Item item, string imageFolderPath)
+    {
+        InitializeComponent();
+        System.Diagnostics.Debug.WriteLine($"[DetailsWindow] Created with imageFolderPath: {imageFolderPath}");
+        _imageService = new ImageService(imageFolderPath);
+        PopulateDetails(item);
+    }
+
     private void PopulateDetails(Item item)
     {
         ItemNameBlock.Text = item.Name ?? "Okänt föremål";
@@ -57,8 +65,8 @@ public partial class DetailsWindow : Window
 
         // Debug: Log image search info
         var debugInfo = $"Bildsökning för föremål {itemNumber}:\n";
-        debugInfo += $"- Sökmapp: {_imageService.ImageFolderPath}\n";
-        debugInfo += $"- Sökpar: {itemNumber}*\n";
+        debugInfo += $"- Mapp med föremålsmappar: {_imageService.ImageFolderPath}\n";
+        debugInfo += $"- Sökmapp: {itemNumber}*\n";
         debugInfo += $"- Foton från DB: {item.Photos ?? "(tomt)"}\n";
         debugInfo += $"- Bilder hittade: {_imagePaths.Count}\n";
         
