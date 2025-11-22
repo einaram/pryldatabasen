@@ -39,12 +39,18 @@ public partial class SettingsWindow : Window
                     {
                         ImageFolderPathBox.Text = line.Substring("ImageFolderPath=".Length).Trim();
                     }
+                    else if (line.StartsWith("DebugMode=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var debugValue = line.Substring("DebugMode=".Length).Trim();
+                        DebugModeCheckBox.IsChecked = debugValue.Equals("true", StringComparison.OrdinalIgnoreCase);
+                    }
                 }
             }
             catch
             {
                 FilePathBox.Text = string.Empty;
                 ImageFolderPathBox.Text = string.Empty;
+                DebugModeCheckBox.IsChecked = false;
             }
         }
     }
@@ -105,7 +111,8 @@ public partial class SettingsWindow : Window
             var settings = new[]
             {
                 $"ExcelFile={FilePathBox.Text}",
-                $"ImageFolderPath={ImageFolderPathBox.Text}"
+                $"ImageFolderPath={ImageFolderPathBox.Text}",
+                $"DebugMode={DebugModeCheckBox.IsChecked?.ToString().ToLower() ?? "false"}"
             };
             File.WriteAllLines(settingsPath, settings);
         }

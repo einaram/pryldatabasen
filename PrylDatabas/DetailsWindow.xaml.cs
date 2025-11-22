@@ -119,7 +119,12 @@ public partial class DetailsWindow : Window
         }
 
         System.Diagnostics.Debug.WriteLine(debugInfo);
-        MessageBox.Show(debugInfo, "Bildsökning - Debug Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        
+        // Show debug info only if debug mode is enabled
+        if (IsDebugModeEnabled())
+        {
+            MessageBox.Show(debugInfo, "Bildsökning - Debug Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
 
         if (_imagePaths.Count > 0 || _imageDisplayItems.Count > 0)
         {
@@ -149,6 +154,33 @@ public partial class DetailsWindow : Window
             NoImagesText.Visibility = Visibility.Visible;
             MainImage.Source = null;
         }
+    }
+
+    private bool IsDebugModeEnabled()
+    {
+        var settingsPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "PrylDatabas",
+            "settings.txt");
+
+        if (File.Exists(settingsPath))
+        {
+            try
+            {
+                var lines = File.ReadAllLines(settingsPath);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("DebugMode=", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var debugValue = line.Substring("DebugMode=".Length).Trim();
+                        return debugValue.Equals("true", StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+            catch { }
+        }
+
+        return false; // Default to false if setting not found
     }
 
     private void DisplayImage(string imagePath)
