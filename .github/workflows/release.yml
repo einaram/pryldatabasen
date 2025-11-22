@@ -38,6 +38,8 @@ jobs:
       - name: Create Release Artifacts
         shell: pwsh
         run: |
+          $version = "${{ github.run_number }}"
+          
           # Create standalone package (with .NET)
           $standalonePath = @("publish-standalone/PrylDatabas.exe", "publish-standalone/*.dll")
           if (Test-Path "publish-standalone/runtimes") { $standalonePath += "publish-standalone/runtimes" }
@@ -45,7 +47,7 @@ jobs:
           if (Test-Path "data") { $standalonePath += "data" }
           
           Get-Item $standalonePath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Including: $_" }
-          Compress-Archive -Path $standalonePath -DestinationPath PrylDatabas-standalone.zip -Force
+          Compress-Archive -Path $standalonePath -DestinationPath "PrylDatabas-standalone-v$version.zip" -Force
           
           # Create framework-dependent package (without .NET)
           $frameworkPath = @("publish-framework/PrylDatabas.exe", "publish-framework/*.dll", "publish-framework/*.deps.json", "publish-framework/*.runtimeconfig.json")
@@ -54,16 +56,17 @@ jobs:
           if (Test-Path "data") { $frameworkPath += "data" }
           
           Get-Item $frameworkPath -ErrorAction SilentlyContinue | ForEach-Object { Write-Host "Including: $_" }
-          Compress-Archive -Path $frameworkPath -DestinationPath PrylDatabas-framework-dependent.zip -Force
+          Compress-Archive -Path $frameworkPath -DestinationPath "PrylDatabas-framework-dependent-v$version.zip" -Force
       
       - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tag: v${{ github.run_number }}
+          version: ${{ github.run_number }}
         run: |
           gh release create "$env:tag" `
               --repo="$env:GITHUB_REPOSITORY" `
               --title="$($env:GITHUB_REPOSITORY -split '/')[-1] $($env:tag -replace 'v')" `
               --generate-notes `
-              PrylDatabas-standalone.zip `
-              PrylDatabas-framework-dependent.zip
+              "PrylDatabas-standalone-v$env:version.zip" `
+              "PrylDatabas-framework-dependent-v$env:version.zip"
