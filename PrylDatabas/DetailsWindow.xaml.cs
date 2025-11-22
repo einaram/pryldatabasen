@@ -42,31 +42,7 @@ public partial class DetailsWindow : Window
 
     private string GetExcelFilePath()
     {
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PrylDatabas",
-            "settings.txt");
-
-        if (File.Exists(settingsPath))
-        {
-            try
-            {
-                var lines = File.ReadAllLines(settingsPath);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("ExcelFile=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var path = line.Substring("ExcelFile=".Length).Trim();
-                        if (File.Exists(path))
-                            return path;
-                    }
-                }
-            }
-            catch { }
-        }
-
-        // Fallback to default
-        return "data/Gamla Prylar - dbs/Gamla Prylar.xlsx";
+        return new SettingsService().GetExcelFilePath();
     }
 
     private void PopulateDetails(Item item)
@@ -158,29 +134,7 @@ public partial class DetailsWindow : Window
 
     private bool IsDebugModeEnabled()
     {
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PrylDatabas",
-            "settings.txt");
-
-        if (File.Exists(settingsPath))
-        {
-            try
-            {
-                var lines = File.ReadAllLines(settingsPath);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("DebugMode=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var debugValue = line.Substring("DebugMode=".Length).Trim();
-                        return debugValue.Equals("true", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-            }
-            catch { }
-        }
-
-        return false; // Default to false if setting not found
+        return new SettingsService().IsDebugModeEnabled();
     }
 
     private void DisplayImage(string imagePath)

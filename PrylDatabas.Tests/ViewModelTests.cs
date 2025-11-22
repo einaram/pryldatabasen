@@ -6,6 +6,7 @@ using System.Linq;
 using Xunit;
 using PrylDatabas.Models;
 using PrylDatabas.ViewModels;
+using PrylDatabas.Services;
 
 namespace PrylDatabas.Tests;
 
@@ -24,7 +25,8 @@ public class ViewModelTests
 
     private MainWindowViewModel CreateViewModelWithDummyData()
     {
-        var viewModel = new MainWindowViewModel();
+        var settingsService = new SettingsService();
+        var viewModel = new MainWindowViewModel(settingsService);
         
         // If no items loaded (Excel file not available), populate with dummy data
         if (viewModel.FilteredItems.Count == 0)

@@ -15,10 +15,10 @@ public partial class MainWindow : Window
 {
     private MainWindowViewModel _viewModel;
 
-    public MainWindow()
+    public MainWindow(SettingsService settingsService)
     {
         InitializeComponent();
-        _viewModel = new MainWindowViewModel();
+        _viewModel = new MainWindowViewModel(settingsService);
         DataContext = _viewModel;
     }
 

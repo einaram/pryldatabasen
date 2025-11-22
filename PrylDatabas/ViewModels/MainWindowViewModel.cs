@@ -6,11 +6,13 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using PrylDatabas.Models;
+using PrylDatabas.Services;
 
 namespace PrylDatabas.ViewModels;
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
+    private readonly SettingsService _settingsService;
     private ItemRepository _itemRepository;
     private ObservableCollection<Item> _allItems;
     private ObservableCollection<Item> _filteredItems;
@@ -23,6 +25,21 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private bool _sortAscending = true;
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public MainWindowViewModel(SettingsService settingsService)
+    {
+        _settingsService = settingsService;
+        _excelFilePath = _settingsService.GetExcelFilePath();
+        _imageFolderPath = _settingsService.GetImageFolderPath();
+        _allItems = new ObservableCollection<Item>();
+        _filteredItems = new ObservableCollection<Item>();
+        Categories = new ObservableCollection<string>();
+        _itemRepository = new ItemRepository(_excelFilePath);
+
+        _sortBy = "Number";  // Set default without triggering toggle
+        LoadItems();
+        // LoadItems calls ApplyFilters which will apply the default sort
+    }
 
     public ObservableCollection<Item> FilteredItems
     {
@@ -76,20 +93,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
             if (SetProperty(ref _sortAscending, value))
                 ApplyFilters();
         }
-    }
-
-    public MainWindowViewModel()
-    {
-        _excelFilePath = GetExcelFilePath();
-        _imageFolderPath = GetImageFolderPath();
-        _allItems = new ObservableCollection<Item>();
-        _filteredItems = new ObservableCollection<Item>();
-        Categories = new ObservableCollection<string>();
-        _itemRepository = new ItemRepository(_excelFilePath);
-
-        _sortBy = "Number";  // Set default without triggering toggle
-        LoadItems();
-        // LoadItems calls ApplyFilters which will apply the default sort
     }
 
     public void LoadItems()
@@ -193,61 +196,12 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private string GetExcelFilePath()
     {
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PrylDatabas",
-            "settings.txt");
-
-        if (File.Exists(settingsPath))
-        {
-            try
-            {
-                var lines = File.ReadAllLines(settingsPath);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("ExcelFile=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var path = line.Substring("ExcelFile=".Length).Trim();
-                        if (File.Exists(path))
-                            return path;
-                    }
-                }
-            }
-            catch { }
-        }
-
-        // Default path relative to solution root
-        return Path.Combine("data", "Gamla Prylar - dbs", "Gamla prylar 251115-xlsx.xlsx");
+        return new Services.SettingsService().GetExcelFilePath();
     }
 
     private string GetImageFolderPath()
     {
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PrylDatabas",
-            "settings.txt");
-
-        if (File.Exists(settingsPath))
-        {
-            try
-            {
-                var lines = File.ReadAllLines(settingsPath);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("ImageFolderPath=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var path = line.Substring("ImageFolderPath=".Length).Trim();
-                        if (!string.IsNullOrEmpty(path))
-                            return path;
-                    }
-                }
-            }
-            catch { }
-        }
-
-        // Default path - resolve to absolute path
-        var solutionRoot = ResolveSolutionRoot();
-        return Path.Combine(solutionRoot, "data", "Gamla Prylar - foton i dbs");
+        return new Services.SettingsService().GetImageFolderPath();
     }
 
     private string ResolveSolutionRoot()

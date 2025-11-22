@@ -1,57 +1,37 @@
 using System;
-using System.IO;
 using System.Windows;
 using Microsoft.Win32;
 using PrylDatabas.ViewModels;
+using PrylDatabas.Services;
 
 namespace PrylDatabas;
 
 public partial class SettingsWindow : Window
 {
     private readonly MainWindowViewModel _viewModel;
+    private readonly SettingsService _settingsService;
 
     public SettingsWindow(MainWindowViewModel viewModel)
     {
         InitializeComponent();
         _viewModel = viewModel;
+        _settingsService = new SettingsService();
         LoadSettings();
     }
 
     private void LoadSettings()
     {
-        var settingsPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PrylDatabas",
-            "settings.txt");
-
-        if (File.Exists(settingsPath))
+        try
         {
-            try
-            {
-                var lines = File.ReadAllLines(settingsPath);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("ExcelFile=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        FilePathBox.Text = line.Substring("ExcelFile=".Length).Trim();
-                    }
-                    else if (line.StartsWith("ImageFolderPath=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        ImageFolderPathBox.Text = line.Substring("ImageFolderPath=".Length).Trim();
-                    }
-                    else if (line.StartsWith("DebugMode=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        var debugValue = line.Substring("DebugMode=".Length).Trim();
-                        DebugModeCheckBox.IsChecked = debugValue.Equals("true", StringComparison.OrdinalIgnoreCase);
-                    }
-                }
-            }
-            catch
-            {
-                FilePathBox.Text = string.Empty;
-                ImageFolderPathBox.Text = string.Empty;
-                DebugModeCheckBox.IsChecked = false;
-            }
+            FilePathBox.Text = _settingsService.GetExcelFilePath();
+            ImageFolderPathBox.Text = _settingsService.GetImageFolderPath();
+            DebugModeCheckBox.IsChecked = _settingsService.IsDebugModeEnabled();
+        }
+        catch
+        {
+            FilePathBox.Text = string.Empty;
+            ImageFolderPathBox.Text = string.Empty;
+            DebugModeCheckBox.IsChecked = false;
         }
     }
 
@@ -101,20 +81,10 @@ public partial class SettingsWindow : Window
     {
         try
         {
-            var appDataPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "PrylDatabas");
-
-            Directory.CreateDirectory(appDataPath);
-
-            var settingsPath = Path.Combine(appDataPath, "settings.txt");
-            var settings = new[]
-            {
-                $"ExcelFile={FilePathBox.Text}",
-                $"ImageFolderPath={ImageFolderPathBox.Text}",
-                $"DebugMode={DebugModeCheckBox.IsChecked?.ToString().ToLower() ?? "false"}"
-            };
-            File.WriteAllLines(settingsPath, settings);
+            _settingsService.SaveSettings(
+                FilePathBox.Text,
+                ImageFolderPathBox.Text,
+                DebugModeCheckBox.IsChecked ?? false);
         }
         catch (Exception ex)
         {

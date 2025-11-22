@@ -3,13 +3,17 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using Microsoft.Extensions.DependencyInjection;
 using QuestPDF.Infrastructure;
+using PrylDatabas.Services;
+using PrylDatabas.ViewModels;
 
 namespace PrylDatabas;
 
 public partial class App : Application
 {
     private static StreamWriter? _debugWriter;
+    public static IServiceProvider ServiceProvider { get; private set; } = null!;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -33,7 +37,14 @@ public partial class App : Application
         // Configure QuestPDF Community License
         QuestPDF.Settings.License = LicenseType.Community;
         
-        MainWindow = new MainWindow();
+        // Set up Dependency Injection container
+        var services = new ServiceCollection();
+        services.AddSingleton<SettingsService>();
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<MainWindow>();
+        ServiceProvider = services.BuildServiceProvider();
+        
+        MainWindow = ServiceProvider.GetRequiredService<MainWindow>();
         MainWindow.Show();
     }
 
