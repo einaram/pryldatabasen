@@ -64,26 +64,17 @@ public class ImageService
             return null;
 
         // Search in item-specific folder first (e.g., "302 Tullas ring")
-        var itemFolder = Path.Combine(_imageFolder, itemNumber + "*");
-        try
+        var folder = FindItemFolder(itemNumber);
+        if (!string.IsNullOrEmpty(folder))
         {
-            var folders = Directory.GetDirectories(_imageFolder, itemNumber + "*", SearchOption.TopDirectoryOnly);
-            if (folders.Length > 0)
-            {
-                var folder = folders[0];
-                var imagePath = Path.Combine(folder, fileName);
-                if (File.Exists(imagePath))
-                    return imagePath;
+            var imagePath = Path.Combine(folder, fileName);
+            if (File.Exists(imagePath))
+                return imagePath;
 
-                // Also check with common image extensions if not found exactly
-                var imageWithExtensions = FindImageWithExtension(folder, Path.GetFileNameWithoutExtension(fileName));
-                if (!string.IsNullOrEmpty(imageWithExtensions))
-                    return imageWithExtensions;
-            }
-        }
-        catch
-        {
-            // Folder search failed, continue
+            // Also check with common image extensions if not found exactly
+            var imageWithExtensions = FindImageWithExtension(folder, Path.GetFileNameWithoutExtension(fileName));
+            if (!string.IsNullOrEmpty(imageWithExtensions))
+                return imageWithExtensions;
         }
 
         return null;
@@ -104,18 +95,16 @@ public class ImageService
             // First, list all directories in the folder for debugging
             var allFolders = Directory.GetDirectories(_imageFolder);
             System.Diagnostics.Debug.WriteLine($"[ImageService] All folders in image directory:");
-            foreach (var folder in allFolders)
+            foreach (var subFolder in allFolders)
             {
-                System.Diagnostics.Debug.WriteLine($"  - {Path.GetFileName(folder)}");
+                System.Diagnostics.Debug.WriteLine($"  - {Path.GetFileName(subFolder)}");
             }
             
-            var folders = Directory.GetDirectories(_imageFolder, itemNumber + "*", SearchOption.TopDirectoryOnly);
+            var folder = FindItemFolder(itemNumber);
             
-            System.Diagnostics.Debug.WriteLine($"[ImageService] Found {folders.Length} matching folders");
-            
-            if (folders.Length > 0)
+            if (!string.IsNullOrEmpty(folder))
             {
-                var folder = folders[0];
+                System.Diagnostics.Debug.WriteLine($"[ImageService] Found 1 matching folder");
                 System.Diagnostics.Debug.WriteLine($"[ImageService] Using folder: {folder}");
                 
                 var imageExtensions = new[] { ".jpg", ".jpeg", ".png", ".bmp", ".gif", ".tiff" };
@@ -266,12 +255,49 @@ public class ImageService
 
         return results;
     }
+
+    /// <summary>
+    /// Find the folder for a given item number.
+    /// Returns the first folder matching the pattern "itemNumber *" (with space).
+    /// This ensures item 20 doesn't match folder 200.
+    /// </summary>
+    public string? FindItemFolder(string? itemNumber)
+    {
+        if (string.IsNullOrEmpty(itemNumber))
+            return null;
+
+        try
+        {
+            // Match folders that start with itemNumber followed by a space
+            // This prevents item "20" from matching folder "200" or "201"
+            var pattern = itemNumber + " *";
+            var folders = Directory.GetDirectories(_imageFolder, pattern, SearchOption.TopDirectoryOnly);
+            if (folders.Length > 0)
+            {
+                return folders[0];
+            }
+
+            // Fallback: if no folder with space is found, try the old pattern for backwards compatibility
+            // but only if it's an exact match (folder name is exactly the item number)
+            folders = Directory.GetDirectories(_imageFolder, itemNumber, SearchOption.TopDirectoryOnly);
+            if (folders.Length > 0)
+            {
+                return folders[0];
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ImageService] Error finding item folder: {ex.Message}");
+        }
+
+        return null;
+    }
 }
 
-/// <summary>
-/// Represents an image result with its found status.
-/// </summary>
-public class ImageResult
+    /// <summary>
+    /// Represents an image result with its found status.
+    /// </summary>
+    public class ImageResult
 {
     public string FileName { get; }
     public string FullPath { get; }

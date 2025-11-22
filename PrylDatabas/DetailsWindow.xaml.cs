@@ -170,6 +170,40 @@ public partial class DetailsWindow : Window
         }
     }
 
+    private void OpenFolderButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentItem == null || !_currentItem.Number.HasValue)
+        {
+            MessageBox.Show("Inget föremål är valt.", "Fel", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            // Find the folder for this item
+            var imageService = new ImageService(_imageFolderPath);
+            var folderPath = imageService.FindItemFolder(_currentItem.Number.ToString());
+
+            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            {
+                MessageBox.Show($"Kunde inte hitta mapp för föremål {_currentItem.Number}.", "Mapp ej hittad", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            // Open the folder in Windows Explorer
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = $"\"{folderPath}\"",
+                UseShellExecute = true
+            });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Kunde inte öppna Utforskaren: {ex.Message}", "Fel", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void AddImagesButton_Click(object sender, RoutedEventArgs e)
     {
         if (_currentItem == null)

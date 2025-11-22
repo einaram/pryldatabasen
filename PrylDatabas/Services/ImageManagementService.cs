@@ -10,11 +10,13 @@ public class ImageManagementService
 {
     private readonly string _imageFolderPath;
     private readonly ItemRepository _itemRepository;
+    private readonly ImageService _imageService;
 
     public ImageManagementService(string imageFolderPath, ItemRepository itemRepository)
     {
         _imageFolderPath = imageFolderPath;
         _itemRepository = itemRepository;
+        _imageService = new ImageService(imageFolderPath);
     }
 
     /// <summary>
@@ -27,14 +29,24 @@ public class ImageManagementService
 
         try
         {
-            // Create item folder if it doesn't exist
-            var itemFolderName = $"{item.Number} {item.Name}";
-            var itemFolderPath = Path.Combine(_imageFolderPath, itemFolderName);
+            // First, try to find an existing folder for this item (matching the item number)
+            string? itemFolderPath = _imageService.FindItemFolder(item.Number?.ToString());
 
-            if (!Directory.Exists(itemFolderPath))
+            // If no existing folder found, create a new one with standard naming
+            if (itemFolderPath == null)
             {
-                Directory.CreateDirectory(itemFolderPath);
-                System.Diagnostics.Debug.WriteLine($"Created folder: {itemFolderPath}");
+                var itemFolderName = $"{item.Number} {item.Name}";
+                itemFolderPath = Path.Combine(_imageFolderPath, itemFolderName);
+
+                if (!Directory.Exists(itemFolderPath))
+                {
+                    Directory.CreateDirectory(itemFolderPath);
+                    System.Diagnostics.Debug.WriteLine($"Created folder: {itemFolderPath}");
+                }
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"Using existing folder: {itemFolderPath}");
             }
 
             // Copy files and collect filenames (without extensions for Excel)

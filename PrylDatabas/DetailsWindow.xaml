@@ -84,6 +84,11 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
+                    <!-- Open Folder Button -->
+                    <Button x:Name="OpenFolderButton" Content="📁 Öppna bildmapp i Utforskaren" Click="OpenFolderButton_Click" 
+                           Margin="10,0,10,10" Padding="10,8" Background="#007ACC" Foreground="White"
+                           ToolTip="Öppna föremålsmappen i Windows Utforskaren"/>
+
                     <!-- Main Image Display -->
                     <Border x:Name="ImageBorder" Margin="10" BorderBrush="LightGray" BorderThickness="1" MinHeight="300">
                         <Image x:Name="MainImage" Stretch="Uniform"/>
